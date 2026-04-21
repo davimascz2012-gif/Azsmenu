@@ -1,256 +1,310 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+-- // SERVICES
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 
-local Config = {
-    CameraAimbotEnabled = false,
-    SilentAimEnabled = false,
-    AimKey = Enum.UserInputType.MouseButton2,
-    SilentHitChance = 100,
-    PredictionEnabled = true,
-    PredictionAmount = 0.13,
-    TargetPart = "Head",
-    Smoothness = 0.25,
-    FOVEnabled = true,
-    FOVRadius = 150,
-    FOVColor = Color3.fromRGB(0, 255, 200),
-    ESPEnabled = true,
-    ShowBox = true,
-    ShowName = true,
-    ShowDistance = true,
-    ShowTracers = true,
-    ShowHealthBar = true,
-    ShowSkeleton = true,
-    ShowSnaplines = true,
-    ShowWallhack = true,
-    TeamCheck = true,
-    BoxColor = Color3.fromRGB(255, 50, 50),
+-- // VARIABLES
+local Mouse = Players.LocalPlayer:GetMouse()
+local Library = {}
+Library.Window = {}
+
+-- // COLORS
+local Theme = {
+    Primary = Color3.fromRGB(0, 255, 200),
+    Secondary = Color3.fromRGB(17, 18, 20),
+    Background = Color3.fromRGB(10, 10, 12),
     TextColor = Color3.fromRGB(255, 255, 255),
-    TracerColor = Color3.fromRGB(255, 100, 100),
-    SkeletonColor = Color3.fromRGB(0, 255, 255),
-    SnaplinesColor = Color3.fromRGB(255, 200, 0),
-    WallhackFillColor = Color3.fromRGB(180, 0, 255),
-    WallhackOutlineColor = Color3.fromRGB(255, 255, 255),
-    WallhackFillTransparency = 0.6,
-    WallhackOutlineTransparency = 0,
+    Outline = Color3.fromRGB(26, 29, 37)
 }
 
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 2
-FOVCircle.Transparency = 0.75
-FOVCircle.NumSides = 100
-FOVCircle.Color = Config.FOVColor
-FOVCircle.Visible = false
+-- // CREATE MAIN WINDOW
+local AZSMenu = Instance.new("ScreenGui")
+AZSMenu.Name = "AZS_Menu"
+AZSMenu.Parent = game:GetService("CoreGui")
 
-local ESPCache = {}
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "Main"
+MainFrame.Parent = AZSMenu
+MainFrame.BackgroundColor3 = Theme.Background
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.15, 0, 0.15, 0)
+MainFrame.Size = UDim2.new(0, 600, 0, 450)
 
-local function CreateESP(player)
-    if ESPCache[player] or player == LocalPlayer then return end
-    local d = {}
-    d.Box = Drawing.new("Square"); d.Box.Thickness = 2; d.Box.Filled = false; d.Box.Color = Config.BoxColor; d.Box.Transparency = 1; d.Box.Visible = false
-    d.Text = Drawing.new("Text"); d.Text.Size = 14; d.Text.Color = Config.TextColor; d.Text.Outline = true; d.Text.Center = true; d.Text.Font = 2; d.Text.Visible = false
-    d.Tracer = Drawing.new("Line"); d.Tracer.Thickness = 1.5; d.Tracer.Color = Config.TracerColor; d.Tracer.Transparency = 0.8; d.Tracer.Visible = false
-    d.HealthBG = Drawing.new("Square"); d.HealthBG.Thickness = 1; d.HealthBG.Filled = true; d.HealthBG.Color = Color3.fromRGB(30,30,30); d.HealthBG.Transparency = 0.9; d.HealthBG.Visible = false
-    d.HealthBar = Drawing.new("Square"); d.HealthBar.Thickness = 1; d.HealthBar.Filled = true; d.HealthBar.Transparency = 1; d.HealthBar.Visible = false
-    d.Skeleton = {}
-    local bones = {{"Head","UpperTorso"},{"UpperTorso","LowerTorso"},{"UpperTorso","LeftUpperArm"},{"LeftUpperArm","LeftLowerArm"},{"LeftLowerArm","LeftHand"},{"UpperTorso","RightUpperArm"},{"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"},{"LowerTorso","LeftUpperLeg"},{"LeftUpperLeg","LeftLowerLeg"},{"LeftLowerLeg","LeftFoot"},{"LowerTorso","RightUpperLeg"},{"RightUpperLeg","RightLowerLeg"},{"RightLowerLeg","RightFoot"}}
-    for _, p in ipairs(bones) do local line = Drawing.new("Line"); line.Thickness = 1.5; line.Color = Config.SkeletonColor; line.Transparency = 0.9; line.Visible = false; table.insert(d.Skeleton, {From = p[1], To = p[2], Line = line}) end
-    d.Snapline = Drawing.new("Line"); d.Snapline.Thickness = 1.5; d.Snapline.Color = Config.SnaplinesColor; d.Snapline.Transparency = 0.8; d.Snapline.Visible = false
-    d.Wallhack = Instance.new("Highlight")
-    d.Wallhack.FillColor = Config.WallhackFillColor
-    d.Wallhack.OutlineColor = Config.WallhackOutlineColor
-    d.Wallhack.FillTransparency = Config.WallhackFillTransparency
-    d.Wallhack.OutlineTransparency = Config.WallhackOutlineTransparency
-    d.Wallhack.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    d.Wallhack.Enabled = false
-    ESPCache[player] = d
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 20)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Theme.Primary
+MainStroke.Thickness = 2
+MainStroke.Parent = MainFrame
+
+-- // TITLE BAR
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Theme.Secondary
+TitleBar.BorderSizePixel = 0
+TitleBar.Size = UDim2.new(1, 0, 0, 60)
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 20)
+TitleCorner.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "Title"
+TitleText.Parent = TitleBar
+TitleText.BackgroundTransparency = 1
+TitleText.Size = UDim2.new(1, -20, 1, 0)
+TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.Font = Enum.Font.GothamBold
+TitleText.Text = "⚡ AZS MENU ⚡"
+TitleText.TextColor3 = Theme.Primary
+TitleText.TextSize = 28
+
+-- // CLOSE BUTTON
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "Close"
+CloseBtn.Parent = TitleBar
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Size = UDim2.new(0, 40, 0, 40)
+CloseBtn.Position = UDim2.new(1, -50, 0, 10)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255,255,255)
+CloseBtn.TextSize = 20
+CloseBtn.Font = Enum.Font.GothamBold
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 10)
+CloseCorner.Parent = CloseBtn
+
+-- // CONTAINER DOS BOTÕES DE JOGOS
+local GamesContainer = Instance.new("Frame")
+GamesContainer.Name = "Games"
+GamesContainer.Parent = MainFrame
+GamesContainer.BackgroundTransparency = 1
+GamesContainer.Position = UDim2.new(0, 20, 0, 80)
+GamesContainer.Size = UDim2.new(0, 560, 0, 80)
+
+local Layout = Instance.new("UIListLayout")
+Layout.Parent = GamesContainer
+Layout.FillDirection = Enum.FillDirection.Horizontal
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+Layout.Padding = UDim.new(0, 15)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+-- // FUNÇÃO DE CRIAR BOTÃO DE JOGO
+local SelectedGame = nil
+
+local function CreateGameButton(Name, Order)
+    local Button = Instance.new("TextButton")
+    Button.Name = Name.."_Btn"
+    Button.LayoutOrder = Order
+    Button.Parent = GamesContainer
+    Button.BackgroundColor3 = Theme.Secondary
+    Button.BorderSizePixel = 0
+    Button.Size = UDim2.new(0, 120, 0, 70)
+    Button.Font = Enum.Font.GothamBold
+    Button.Text = Name
+    Button.TextColor3 = Theme.TextColor
+    Button.TextSize = 18
+    
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 15)
+    BtnCorner.Parent = Button
+    
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Name = "Stroke"
+    BtnStroke.Color = Theme.Outline
+    BtnStroke.Thickness = 2
+    BtnStroke.Parent = Button
+    
+    return Button
 end
 
-local function UpdateESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if not ESPCache[player] then CreateESP(player) end
-        local data = ESPCache[player]
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
-            local hum = player.Character.Humanoid
-            local root = player.Character.HumanoidRootPart
-            local pos, vis = Camera:WorldToViewportPoint(root.Position)
-            local isTeammate = LocalPlayer.Team == player.Team
-            if Config.ESPEnabled and vis and not isTeammate then
-                if Config.ShowBox then local vec = Camera:WorldToViewportPoint(root.Position + Vector3.new(0,2.5,0)); data.Box.Size = Vector2.new(30, 50); data.Box.Position = Vector2.new(vec.X - 15, vec.Y - 25); data.Box.Visible = true end
-                if Config.ShowName then data.Text.Text = player.Name .. " ["..math.floor((root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude).."m]"; data.Text.Position = Vector2.new(data.Box.Position.X + 15, data.Box.Position.Y - 20); data.Text.Visible = true end
-                if Config.ShowTracers then data.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y); data.Tracer.To = Vector2.new(pos.X, pos.Y); data.Tracer.Visible = true end
-                data.Wallhack.Enabled = Config.ShowWallhack
-                data.Wallhack.Adornee = root.Parent
-            else
-                data.Box.Visible = false; data.Text.Visible = false; data.Tracer.Visible = false; data.Wallhack.Enabled = false
-            end
-        else
-            if data then data.Box.Visible = false; data.Text.Visible = false; data.Tracer.Visible = false; data.Wallhack.Enabled = false end
-        end
-    end
-end
+-- // CRIANDO OS BOTÕES
+local RivalsBtn = CreateGameButton("Rivals", 1)
+local ArsenalBtn = CreateGameButton("Arsenal", 2)
+local CBloxBtn = CreateGameButton("CounterBlox", 3)
+local OtherBtn = CreateGameButton("Outros", 4)
 
-local function GetClosestWithPrediction()
-    local closestDistance = math.huge
-    local closestPlayer = nil
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(Config.TargetPart) then
-            local rootPart = player.Character.PrimaryPart
-            local vel = rootPart.Velocity * Config.PredictionAmount
-            local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position + vel)
-            if onScreen then
-                local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(LocalPlayer:GetMouse().X, LocalPlayer:GetMouse().Y)).Magnitude
-                if dist < closestDistance and dist < Config.FOVRadius then
-                    closestDistance = dist
-                    closestPlayer = player
-                end
-            end
-        end
-    end
-    return closestPlayer
-end
+-- // SEÇÃO DE CONFIGS (VAI APARECER QUANDO CLICA)
+local ConfigSection = Instance.new("Frame")
+ConfigSection.Name = "Configs"
+ConfigSection.Parent = MainFrame
+ConfigSection.BackgroundColor3 = Theme.Secondary
+ConfigSection.BorderSizePixel = 0
+ConfigSection.Position = UDim2.new(0, 20, 0, 170)
+ConfigSection.Size = UDim2.new(0, 560, 0, 200)
+ConfigSection.Visible = false
 
-local oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    if method == "FindPartOnRay" or method == "Raycast" then
-        if Config.SilentAimEnabled and math.random(1,100) <= Config.SilentHitChance then
-            local target = GetClosestWithPrediction()
-            if target and target.Character and target.Character:FindFirstChild(Config.TargetPart) then
-                return target.Character[Config.TargetPart]
-            end
-        end
-    end
-    return oldNamecall(self, ...)
-end))
+local ConfigCorner = Instance.new("UICorner")
+ConfigCorner.CornerRadius = UDim.new(0, 15)
+ConfigCorner.Parent = ConfigSection
 
-local Menu = {Open = true, Dragging = false, Position = Vector2.new(100, 80)}
-local Drawings = {}
+local ConfigStroke = Instance.new("UIStroke")
+ConfigStroke.Color = Theme.Outline
+ConfigStroke.Thickness = 2
+ConfigStroke.Parent = ConfigSection
 
-local function AddToggle(name, text, yPos)
-    Drawings[name.."Text"] = Drawing.new("Text")
-    Drawings[name.."Text"].Text = text
-    Drawings[name.."Text"].Size = 16
-    Drawings[name.."Text"].Color = Color3.fromRGB(220, 220, 220)
-    Drawings[name.."Text"].Position = Menu.Position + Vector2.new(25, yPos)
-    
-    Drawings[name.."Button"] = Drawing.new("Square")
-    Drawings[name.."Button"].Size = Vector2.new(26, 26)
-    Drawings[name.."Button"].Position = Menu.Position + Vector2.new(290, yPos - 3)
-    Drawings[name.."Button"].Color = Color3.fromRGB(40, 40, 45)
-    Drawings[name.."Button"].Transparency = 0.9
-    Drawings[name.."Button"].Filled = true
-    
-    Drawings[name.."Inner"] = Drawing.new("Square")
-    Drawings[name.."Inner"].Size = Vector2.new(18, 18)
-    Drawings[name.."Inner"].Position = Menu.Position + Vector2.new(294, yPos + 1)
-    Drawings[name.."Inner"].Color = Color3.fromRGB(255, 50, 50) -- Vermelho = Desligado
-end
+-- // TOGGLES DENTRO DA CONFIG
+local AutoLoadToggle = Instance.new("Frame")
+AutoLoadToggle.Name = "AutoLoad"
+AutoLoadToggle.Parent = ConfigSection
+AutoLoadToggle.BackgroundColor3 = Theme.Background
+AutoLoadToggle.BorderSizePixel = 0
+AutoLoadToggle.Position = UDim2.new(0, 20, 0, 20)
+AutoLoadToggle.Size = UDim2.new(0, 200, 0, 50)
 
-local function CreateMenuElements()
-    Drawings.Background = Drawing.new("Square")
-    Drawings.Background.Size = Vector2.new(360, 580)
-    Drawings.Background.Position = Menu.Position
-    Drawings.Background.Color = Color3.fromRGB(20, 20, 25)
-    Drawings.Background.Transparency = 0.92
-    Drawings.Background.Filled = true
-    
-    Drawings.Border = Drawing.new("Square")
-    Drawings.Border.Size = Vector2.new(362, 582)
-    Drawings.Border.Position = Menu.Position - Vector2.new(1,1)
-    Drawings.Border.Color = Color3.fromRGB(0, 255, 200)
-    Drawings.Border.Thickness = 2
-    Drawings.Border.Filled = false
-    
-    Drawings.TitleBG = Drawing.new("Square")
-    Drawings.TitleBG.Size = Vector2.new(360, 50)
-    Drawings.TitleBG.Position = Menu.Position
-    Drawings.TitleBG.Color = Color3.fromRGB(15, 15, 20)
-    Drawings.TitleBG.Transparency = 0.8
-    Drawings.TitleBG.Filled = true
-    
-    Drawings.Title = Drawing.new("Text")
-    Drawings.Title.Text = "⚡ AZS MENU ⚡"
-    Drawings.Title.Size = 22
-    Drawings.Title.Color = Color3.fromRGB(0, 255, 200)
-    Drawings.Title.Outline = true
-    Drawings.Title.Center = true
-    Drawings.Title.Position = Menu.Position + Vector2.new(180, 12)
+local ALCorner = Instance.new("UICorner")
+ALCorner.CornerRadius = UDim.new(0, 12)
+ALCorner.Parent = AutoLoadToggle
 
-    local y = 70
-    AddToggle("Camera", "🎯 AIMBOT", y); y += 40
-    AddToggle("Silent", "🔫 SILENT AIM", y); y += 40
-    AddToggle("Prediction", "🔮 PREDICTION", y); y += 40
-    AddToggle("FOV", "🔍 FOV CIRCLE", y); y += 40
-    AddToggle("ESP", "👁️ ESP", y); y += 40
-    AddToggle("Wallhack", "🧱 WALLHACK", y)
+local ALText = Instance.new("TextLabel")
+ALText.Parent = AutoLoadToggle
+ALText.BackgroundTransparency = 1
+ALText.Position = UDim2.new(0, 15, 0, 0)
+ALText.Size = UDim2.new(1, -80, 1, 0)
+ALText.Text = "Auto Load"
+ALText.TextColor3 = Theme.TextColor
+ALText.TextSize = 16
+ALText.Font = Enum.Font.Gotham
 
-    Drawings.HitChanceText = Drawing.new("Text"); Drawings.HitChanceText.Text = "Hit Chance: 100%"; Drawings.HitChanceText.Size = 16; Drawings.HitChanceText.Position = Menu.Position + Vector2.new(25, y + 10)
-    Drawings.HitChanceBar = Drawing.new("Square"); Drawings.HitChanceBar.Size = Vector2.new(220, 10); Drawings.HitChanceBar.Position = Menu.Position + Vector2.new(25, y + 30); Drawings.HitChanceBar.Color = Color3.fromRGB(50,50,55); Drawings.HitChanceBar.Filled = true
-    Drawings.HitChanceKnob = Drawing.new("Square"); Drawings.HitChanceKnob.Size = Vector2.new(16, 18); Drawings.HitChanceKnob.Color = Color3.fromRGB(0, 255, 200); Drawings.HitChanceKnob.Filled = true
+local ALButton = Instance.new("TextButton")
+ALButton.Name = "Btn"
+ALButton.Parent = AutoLoadToggle
+ALButton.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+ALButton.BorderSizePixel = 0
+ALButton.Position = UDim2.new(1, -60, 0, 10)
+ALButton.Size = UDim2.new(0, 40, 0, 30)
+ALButton.Text = "ON"
+ALButton.TextColor3 = Color3.fromRGB(0,0,0)
+ALButton.TextSize = 14
 
-    Drawings.Instructions = Drawing.new("Text")
-    Drawings.Instructions.Text = "F1 - Abrir/Fechar | Botão Direito - Mirar"
-    Drawings.Instructions.Size = 14
-    Drawings.Instructions.Color = Color3.fromRGB(160, 160, 160)
-    Drawings.Instructions.Position = Menu.Position + Vector2.new(25, 520)
-end
+local ALBtnCorner = Instance.new("UICorner")
+ALBtnCorner.CornerRadius = UDim.new(0, 8)
+ALBtnCorner.Parent = ALButton
 
-CreateMenuElements()
+-- // BOTÃO DE EXECUTAR
+local ExecuteBtn = Instance.new("TextButton")
+ExecuteBtn.Name = "Execute"
+ExecuteBtn.Parent = MainFrame
+ExecuteBtn.BackgroundColor3 = Theme.Primary
+ExecuteBtn.BorderSizePixel = 0
+ExecuteBtn.Position = UDim2.new(0, 20, 0, 390)
+ExecuteBtn.Size = UDim2.new(0, 560, 0, 50)
+ExecuteBtn.Text = "▶️ EXECUTAR SCRIPT"
+ExecuteBtn.TextColor3 = Color3.fromRGB(0,0,0)
+ExecuteBtn.TextSize = 20
+ExecuteBtn.Font = Enum.Font.GothamBold
+
+local ExeCorner = Instance.new("UICorner")
+ExeCorner.CornerRadius = UDim.new(0, 12)
+ExeCorner.Parent = ExecuteBtn
 
 -- ==============================================
--- 🔥 FUNÇÃO DE CLICAR NOS BOTÕES (ADICIONADA)
+-- // SCRIPTS LINKS
+-- ==============================================
+local Scripts = {
+    ["Rivals"] = "https://raw.githubusercontent.com/davimascz2012-gif/Azsmenu/main/Azsmenu.lua",
+    
+}
+
+-- ==============================================
+-- // FUNCTIONS
+-- ==============================================
+local AutoLoad = true
+local function UpdateToggle()
+    if AutoLoad then
+        ALButton.BackgroundColor3 = Color3.fromRGB(0,255,100)
+        ALButton.Text = "ON"
+    else
+        ALButton.BackgroundColor3 = Color3.fromRGB(255,70,70)
+        ALButton.Text = "OFF"
+    end
+end
+
+local function SelectGame(Button, Name)
+    -- Resetar todos
+    for _, v in pairs(GamesContainer:GetChildren()) do
+        if v:IsA("TextButton") then
+            v.Stroke.Color = Theme.Outline
+        end
+    end
+    
+    -- Selecionar o atual
+    Button.Stroke.Color = Theme.Primary
+    SelectedGame = Name
+    ConfigSection.Visible = true
+    UpdateToggle()
+end
+
+-- // EVENTOS
+RivalsBtn.MouseButton1Click:Connect(function()
+    SelectGame(RivalsBtn, "Rivals")
+end)
+
+ArsenalBtn.MouseButton1Click:Connect(function()
+    SelectGame(ArsenalBtn, "Arsenal")
+end)
+
+CBloxBtn.MouseButton1Click:Connect(function()
+    SelectGame(CBloxBtn, "CounterBlox")
+end)
+
+ALButton.MouseButton1Click:Connect(function()
+    AutoLoad = not AutoLoad
+    UpdateToggle()
+end)
+
+ExecuteBtn.MouseButton1Click:Connect(function()
+    if SelectedGame and Scripts[SelectedGame] then
+        loadstring(game:HttpGet(Scripts[SelectedGame]))()
+    else
+        print("SELECIONE UM JOGO!")
+    end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    AZSMenu:Destroy()
+end)
+
+-- ==============================================
+-- // 🔥 TECLA F1 PARA ABRIR E FECHAR
 -- ==============================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
-    -- Abrir/Fechar Menu
     if input.KeyCode == Enum.KeyCode.F1 then
-        Menu.Open = not Menu.Open
-        Drawings.Background.Visible = Menu.Open
-        Drawings.Border.Visible = Menu.Open
-        Drawings.TitleBG.Visible = Menu.Open
-        Drawings.Title.Visible = Menu.Open
-        Drawings.Instructions.Visible = Menu.Open
-        
-        for k, v in pairs(Drawings) do
-            if string.find(k, "Text") or string.find(k, "Button") or string.find(k, "Inner") or string.find(k, "HitChance") then
-                v.Visible = Menu.Open
-            end
-        end
+        MainFrame.Visible = not MainFrame.Visible
     end
-    
-    -- Clicar nos Botões
+end)
+
+-- // DRAG SYSTEM (PARA MOVER A JANELA)
+local Dragging, DragStart, StartPos
+
+TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        local mousePos = Vector2.new(input.Position.X, input.Position.Y)
-        
-        -- Função para checar clique
-        local function IsClicking(element)
-            return mousePos.X > element.Position.X and mousePos.X < element.Position.X + element.Size.X and
-                   mousePos.Y > element.Position.Y and mousePos.Y < element.Position.Y + element.Size.Y
-        end
-        
-        -- Verificar cada botão
-        if IsClicking(Drawings.CameraButton) then
-            Config.CameraAimbotEnabled = not Config.CameraAimbotEnabled
-            Drawings.CameraInner.Color = Config.CameraAimbotEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
-        end
-        if IsClicking(Drawings.SilentButton) then
-            Config.SilentAimEnabled = not Config.SilentAimEnabled
-            Drawings.SilentInner.Color = Config.SilentAimEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
-        end
-        if IsClicking(Drawings.PredictionButton) then
-            Config.PredictionEnabled = not Config.PredictionEnabled
-            Drawings.PredictionInner.Color = Config.PredictionEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
-        end
-        if IsClicking(Drawings.FOVButton) then
-            Config.FOVEnabled = not Config.FOVEnabled
-            Drawings.FOVInner.Color = Config.FOVEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
-        end
-        if IsClicking(Drawings.ESPButton) then
-            Config.ESPEnabled = not Config.ESPEnabled
-            Drawings.ESPInner.Color = Config.ESPEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
-        end
-        if IsClicking(Drawings.WallhackButton) then
-        
+        Dragging = true
+        DragStart = input.Position
+        StartPos = MainFrame.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if Dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local Delta = input.Position - DragStart
+        MainFrame.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        Dragging = false
+    end
+end)
+
+print("✅ AZS MENU CARREGADO!")
