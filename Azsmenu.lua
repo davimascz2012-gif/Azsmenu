@@ -201,28 +201,14 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         Drawings.Border.Visible = Menu.Open
         Drawings.TitleBG.Visible = Menu.Open
         Drawings.Title.Visible = Menu.Open
-        Drawings.CameraText.Visible = Menu.Open
-        Drawings.CameraButton.Visible = Menu.Open
-        Drawings.CameraInner.Visible = Menu.Open
-        Drawings.SilentText.Visible = Menu.Open
-        Drawings.SilentButton.Visible = Menu.Open
-        Drawings.SilentInner.Visible = Menu.Open
-        Drawings.PredictionText.Visible = Menu.Open
-        Drawings.PredictionButton.Visible = Menu.Open
-        Drawings.PredictionInner.Visible = Menu.Open
-        Drawings.FOVText.Visible = Menu.Open
-        Drawings.FOVButton.Visible = Menu.Open
-        Drawings.FOVInner.Visible = Menu.Open
-        Drawings.ESPText.Visible = Menu.Open
-        Drawings.ESPButton.Visible = Menu.Open
-        Drawings.ESPInner.Visible = Menu.Open
-        Drawings.WallhackText.Visible = Menu.Open
-        Drawings.WallhackButton.Visible = Menu.Open
-        Drawings.WallhackInner.Visible = Menu.Open
-        Drawings.HitChanceText.Visible = Menu.Open
-        Drawings.HitChanceBar.Visible = Menu.Open
-        Drawings.HitChanceKnob.Visible = Menu.Open
         Drawings.Instructions.Visible = Menu.Open
+        
+        -- Esconde/mostra os toggles
+        for k, v in pairs(Drawings) do
+            if string.find(k, "Text") or string.find(k, "Button") or string.find(k, "Inner") or string.find(k, "HitChance") then
+                v.Visible = Menu.Open
+            end
+        end
     end
 end)
 
