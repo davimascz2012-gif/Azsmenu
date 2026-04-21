@@ -134,15 +134,18 @@ local function AddToggle(name, text, yPos)
     Drawings[name.."Text"].Size = 16
     Drawings[name.."Text"].Color = Color3.fromRGB(220, 220, 220)
     Drawings[name.."Text"].Position = Menu.Position + Vector2.new(25, yPos)
+    
     Drawings[name.."Button"] = Drawing.new("Square")
     Drawings[name.."Button"].Size = Vector2.new(26, 26)
     Drawings[name.."Button"].Position = Menu.Position + Vector2.new(290, yPos - 3)
     Drawings[name.."Button"].Color = Color3.fromRGB(40, 40, 45)
     Drawings[name.."Button"].Transparency = 0.9
     Drawings[name.."Button"].Filled = true
+    
     Drawings[name.."Inner"] = Drawing.new("Square")
     Drawings[name.."Inner"].Size = Vector2.new(18, 18)
     Drawings[name.."Inner"].Position = Menu.Position + Vector2.new(294, yPos + 1)
+    Drawings[name.."Inner"].Color = Color3.fromRGB(255, 50, 50) -- Vermelho = Desligado
 end
 
 local function CreateMenuElements()
@@ -152,18 +155,21 @@ local function CreateMenuElements()
     Drawings.Background.Color = Color3.fromRGB(20, 20, 25)
     Drawings.Background.Transparency = 0.92
     Drawings.Background.Filled = true
+    
     Drawings.Border = Drawing.new("Square")
     Drawings.Border.Size = Vector2.new(362, 582)
     Drawings.Border.Position = Menu.Position - Vector2.new(1,1)
     Drawings.Border.Color = Color3.fromRGB(0, 255, 200)
     Drawings.Border.Thickness = 2
     Drawings.Border.Filled = false
+    
     Drawings.TitleBG = Drawing.new("Square")
     Drawings.TitleBG.Size = Vector2.new(360, 50)
     Drawings.TitleBG.Position = Menu.Position
     Drawings.TitleBG.Color = Color3.fromRGB(15, 15, 20)
     Drawings.TitleBG.Transparency = 0.8
     Drawings.TitleBG.Filled = true
+    
     Drawings.Title = Drawing.new("Text")
     Drawings.Title.Text = "⚡ AZS MENU ⚡"
     Drawings.Title.Size = 22
@@ -193,8 +199,13 @@ end
 
 CreateMenuElements()
 
+-- ==============================================
+-- 🔥 FUNÇÃO DE CLICAR NOS BOTÕES (ADICIONADA)
+-- ==============================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
+    
+    -- Abrir/Fechar Menu
     if input.KeyCode == Enum.KeyCode.F1 then
         Menu.Open = not Menu.Open
         Drawings.Background.Visible = Menu.Open
@@ -203,22 +214,43 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         Drawings.Title.Visible = Menu.Open
         Drawings.Instructions.Visible = Menu.Open
         
-        -- Esconde/mostra os toggles
         for k, v in pairs(Drawings) do
             if string.find(k, "Text") or string.find(k, "Button") or string.find(k, "Inner") or string.find(k, "HitChance") then
                 v.Visible = Menu.Open
             end
         end
     end
-end)
-
-RunService.Heartbeat:Connect(function()
-    UpdateESP()
-    if Config.CameraAimbotEnabled and UserInputService:IsMouseButtonDown(Config.AimKey) then
-        local target = GetClosestWithPrediction()
-        if target and target.Character then
-            local part = target.Character:FindFirstChild(Config.TargetPart)
-            if part then local cf = CFrame.new(Camera.CFrame.Position, part.Position); Camera.CFrame = Camera.CFrame:Lerp(cf, Config.Smoothness) end
+    
+    -- Clicar nos Botões
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local mousePos = Vector2.new(input.Position.X, input.Position.Y)
+        
+        -- Função para checar clique
+        local function IsClicking(element)
+            return mousePos.X > element.Position.X and mousePos.X < element.Position.X + element.Size.X and
+                   mousePos.Y > element.Position.Y and mousePos.Y < element.Position.Y + element.Size.Y
         end
-    end
-end)
+        
+        -- Verificar cada botão
+        if IsClicking(Drawings.CameraButton) then
+            Config.CameraAimbotEnabled = not Config.CameraAimbotEnabled
+            Drawings.CameraInner.Color = Config.CameraAimbotEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
+        end
+        if IsClicking(Drawings.SilentButton) then
+            Config.SilentAimEnabled = not Config.SilentAimEnabled
+            Drawings.SilentInner.Color = Config.SilentAimEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
+        end
+        if IsClicking(Drawings.PredictionButton) then
+            Config.PredictionEnabled = not Config.PredictionEnabled
+            Drawings.PredictionInner.Color = Config.PredictionEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
+        end
+        if IsClicking(Drawings.FOVButton) then
+            Config.FOVEnabled = not Config.FOVEnabled
+            Drawings.FOVInner.Color = Config.FOVEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
+        end
+        if IsClicking(Drawings.ESPButton) then
+            Config.ESPEnabled = not Config.ESPEnabled
+            Drawings.ESPInner.Color = Config.ESPEnabled and Color3.fromRGB(0,255,100) or Color3.fromRGB(255,50,50)
+        end
+        if IsClicking(Drawings.WallhackButton) then
+        
